@@ -4,16 +4,24 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var formatterService = require('./view/formatter-service.js');
 var diffService = require('./core/diff-service.js');
-var app = express();
+var cors = require('cors');
+var config = require('config');
+var path = require('path');
 
+var app = express();
 var router = express.Router();
+
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors({
+    origin: config.get('server.cors')
+}));
 
 router.get('/alive', function (request, response) {
     response.send('Alive');
 });
 
-router.post('/', function (request, response) {
+router.post('/analyze', function (request, response) {
     var delta = diffService.get(request.body.before, request.body.after);
     switch (request.output) {
         case 'json':
@@ -29,6 +37,7 @@ router.post('/', function (request, response) {
 });
 
 app.use(router);
-app.listen('3000', function () {
-    console.log('Listening on port 3000')
+var port = config.get('server.port');
+app.listen(port, function () {
+    console.log('Listening on port ' + port)
 });
